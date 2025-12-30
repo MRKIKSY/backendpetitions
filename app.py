@@ -8,6 +8,8 @@ from datetime import datetime
 
 load_dotenv()
 
+
+
 app = Flask(__name__)
 CORS(app)
 
