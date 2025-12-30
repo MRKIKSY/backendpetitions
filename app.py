@@ -8,8 +8,6 @@ from datetime import datetime
 
 load_dotenv()
 
-
-
 app = Flask(__name__)
 CORS(app)
 
@@ -45,17 +43,14 @@ This submission represents an allegation provided by a complainant
 for legal review by Eluyefa Chambers on behalf of Mr Scott Iguma.
 """)
 
-    # Attach all uploaded files
     for file_info in attachments:
         with open(file_info["path"], "rb") as f:
-            file_data = f.read()
-
-        msg.add_attachment(
-            file_data,
-            maintype="application",
-            subtype="octet-stream",
-            filename=file_info["original_name"]
-        )
+            msg.add_attachment(
+                f.read(),
+                maintype="application",
+                subtype="octet-stream",
+                filename=file_info["original_name"]
+            )
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
         smtp.login(EMAIL_USER, EMAIL_PASS)
@@ -65,15 +60,12 @@ for legal review by Eluyefa Chambers on behalf of Mr Scott Iguma.
 @app.route("/submit", methods=["POST"])
 def submit_petition():
     try:
-        # Form fields
         full_name = request.form.get("full_name")
         email = request.form.get("email")
         phone = request.form.get("phone")
         payment_date = request.form.get("payment_date")
         account_name = request.form.get("account_name")
         account_number = request.form.get("account_number")
-
-        # Multiple files
         proofs = request.files.getlist("proof")
 
         if not full_name or not email or not phone or not payment_date or not proofs:
@@ -82,29 +74,24 @@ def submit_petition():
         saved_files = []
 
         for proof in proofs:
-            if proof.filename.strip() == "":
-                continue
-
-            filename = f"{int(datetime.now().timestamp())}_{proof.filename}"
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            proof.save(file_path)
-
-            saved_files.append({
-                "path": file_path,
-                "original_name": proof.filename
-            })
-
-        data = {
-            "full_name": full_name,
-            "email": email,
-            "phone": phone,
-            "payment_date": payment_date,
-            "account_name": account_name,
-            "account_number": account_number
-        }
+            if proof.filename:
+                filename = f"{int(datetime.now().timestamp())}_{proof.filename}"
+                path = os.path.join(UPLOAD_FOLDER, filename)
+                proof.save(path)
+                saved_files.append({
+                    "path": path,
+                    "original_name": proof.filename
+                })
 
         send_email(
-            data=data,
+            data={
+                "full_name": full_name,
+                "email": email,
+                "phone": phone,
+                "payment_date": payment_date,
+                "account_name": account_name,
+                "account_number": account_number
+            },
             attachments=saved_files,
             ip=request.remote_addr
         )
@@ -114,20 +101,9 @@ def submit_petition():
     except Exception as e:
         print("ERROR:", e)
         return jsonify({"success": False}), 500
-    
 
 
-    
-
-
-if __name__ == "__main__":
-
-    
-
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
-
+# ✅ TEST ROUTE — MUST BE ABOVE app.run
 @app.route("/test-email")
 def test_email():
     send_email(
@@ -143,3 +119,8 @@ def test_email():
         ip="127.0.0.1"
     )
     return "Email test sent"
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
