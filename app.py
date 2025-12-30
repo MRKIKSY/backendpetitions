@@ -114,9 +114,32 @@ def submit_petition():
     except Exception as e:
         print("ERROR:", e)
         return jsonify({"success": False}), 500
+    
+
+
+    
 
 
 if __name__ == "__main__":
+
     
+
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+
+@app.route("/test-email")
+def test_email():
+    send_email(
+        data={
+            "full_name": "Test User",
+            "email": "test@test.com",
+            "phone": "0000000000",
+            "payment_date": "2025-01-01",
+            "account_name": "Test",
+            "account_number": "123"
+        },
+        attachments=[],
+        ip="127.0.0.1"
+    )
+    return "Email test sent"
